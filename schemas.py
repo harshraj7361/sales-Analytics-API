@@ -14,6 +14,11 @@ class ProductCreate(BaseModel):
     # Stock sirf integer hoga aur negative nahi ho sakta
     stock: int = Field(..., ge=0)
 
+class ProductUpdate(BaseModel):
+    product_name: str | None= Field(None, min_length=1, max_length=50)
+    price: float | None=Field(default=None, gt=0)
+    stock: int | None=Field(default=None, ge=0)
+
 
 # API response mein product ki ID bhi return hogi
 class ProductResponse(ProductCreate):

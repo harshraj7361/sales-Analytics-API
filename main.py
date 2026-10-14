@@ -12,7 +12,7 @@ from database import SessionLocal, engine, Base
 from models import Product
 
 # Request aur response ke Pydantic schemas
-from schemas import ProductCreate, ProductResponse
+from schemas import ProductCreate, ProductResponse,ProductUpdate
 
 
 # FastAPI application create karna
@@ -77,7 +77,48 @@ def get_products(
 
     return products
 
+@app.get("/products/{product_id}")
+def get_product(product_id: int,
+                 
+    db: Session = Depends(get_db)
+):
+    products = db.query(Product).filter(Product.product_id==product_id).first()
+    if products is None:
+        raise HTTPException(
+    status_code=404,
+    detail="Product not found"
+)
+    
+    return products
 
+@app.patch("/products/{product_id}")
+def update_data(product_id:int,
+    product_data: ProductUpdate,
+    db: Session = Depends(get_db)
 
+):
+    products = db.query(Product).filter(Product.product_id==product_id).first()
 
+    if products is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Product not found"
+
+)
+    updated_data = product_data.model_dump(exclude_unset=True)
+
+   
+
+ # Har field aur uski value ko ek-ek karke process karna
+
+    for field, value in updated_data.items():
+        setattr(products, field, value)
+
+    db.commit()
+
+    db.refresh(products)
+
+        
+        
+    return products
 
