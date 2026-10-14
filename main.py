@@ -122,3 +122,20 @@ def update_data(product_id:int,
         
     return products
 
+@app.delete("/delete/{product_id}")
+def delete_stock(product_id: int,
+    db : Session = Depends(get_db)
+
+):
+    products = db.query(Product).filter(Product.product_id==product_id).first()
+
+    if products is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Product not found"
+
+)
+    db.delete(products)
+    db.commit()
+
+    return {"message": "Product deleted successfully"}
