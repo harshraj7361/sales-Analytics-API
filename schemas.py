@@ -27,3 +27,15 @@ class ProductResponse(ProductCreate):
 
     # Pydantic ko SQLAlchemy model objects se data read karne deta hai
     model_config = {"from_attributes": True}
+
+# Sale create karte waqt input validate karega
+class SaleCreate(BaseModel):
+
+    # Kaunsa product sell ho raha hai
+    product_id: int = Field(..., gt=0)
+
+    # Kam se kam 1 unit sell honi chahiye
+    quantity: int = Field(..., ge=1)
+
+    # Har unit ka selling price zero se zyada hona chahiye
+    selling_price: float = Field(..., gt=0)
