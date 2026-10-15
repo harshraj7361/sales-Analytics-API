@@ -13,7 +13,10 @@ from models import Product,Sale
 
 # Request aur response ke Pydantic schemas
 from schemas import ProductCreate, ProductResponse,ProductUpdate,SaleCreate
+from sqlalchemy import func
 
+import pandas as pd
+import numpy as np
 
 # FastAPI application create karna
 app = FastAPI(title="Sales Analytics API")
@@ -178,5 +181,110 @@ def sale_create(sale:SaleCreate,
         raise
     
 
+# Total sales revenue calculate karne ke liye API
+@app.get("/analytics/revenue")
+def get_total_revenue(db: Session = Depends(get_db)):
 
-    
+    # Har sale ka quantity * selling_price calculate karke
+    # sabhi sales ka total nikalna
+    total_revenue = db.query(
+        func.sum(Sale.quantity * Sale.selling_price)
+    ).scalar()
+
+    # Agar abhi koi sale nahi hui hai toh revenue 0 hoga
+    if total_revenue is None:
+        total_revenue = 0
+
+    # Total revenue response mein return karo
+    return {
+        "total_revenue": float(total_revenue)
+    }
+
+
+
+# Pandas se sales report generate karne wali API
+@app.get("/analytics/sales-report")
+def get_sales_report(db: Session = Depends(get_db)):
+
+    # Database se saare sales records fetch karo
+    sales = db.query(Sale).all()
+
+    # Agar koi sale nahi hui hai, toh empty report return karo
+    if not sales:
+        return {
+            "total_sales": 0,
+            "total_quantity_sold": 0,
+            "total_revenue": 0.0,
+            "average_selling_price": 0.0
+        }
+
+    # SQLAlchemy objects se Pandas DataFrame banao
+    df = pd.DataFrame([
+        {
+            "sale_id": sale.sale_id,
+            "quantity": sale.quantity,
+            "selling_price": float(sale.selling_price)
+        }
+        for sale in sales
+    ])
+
+    # Har sale ka revenue calculate karo
+    df["revenue"] = df["quantity"] * df["selling_price"]
+
+    # Pandas se report ke statistics calculate karo
+    total_sales = len(df)
+    total_quantity_sold = int(df["quantity"].sum())
+    total_revenue = float(df["revenue"].sum())
+    average_selling_price = float(df["selling_price"].mean())
+
+    # Report JSON format mein return karo
+    return {
+        "total_sales": total_sales,
+        "total_quantity_sold": total_quantity_sold,
+        "total_revenue": round(total_revenue, 2),
+        "average_selling_price": round(average_selling_price, 2)
+    }
+
+
+# NumPy se sales statistics calculate karne wali API
+@app.get("/analytics/sales-statistics")
+def get_sales_statistics(db: Session = Depends(get_db)):
+
+    # Database se saari sales fetch karo
+    sales = db.query(Sale).all()
+
+    # Agar koi sale nahi hai, toh error ki jagah clear response do
+    if not sales:
+        return {
+            "message": "No sales data available",
+            "average_revenue": 0.0,
+            "median_revenue": 0.0,
+            "maximum_revenue": 0.0,
+            "minimum_revenue": 0.0,
+            "revenue_std_deviation": 0.0
+        }
+
+    # Har sale ka revenue calculate karo:
+    # quantity multiplied by selling price
+    revenues = np.array([
+        float(sale.quantity * sale.selling_price)
+        for sale in sales
+    ])
+
+    # NumPy se statistical calculations
+    average_revenue = np.mean(revenues)
+    median_revenue = np.median(revenues)
+    maximum_revenue = np.max(revenues)
+    minimum_revenue = np.min(revenues)
+    revenue_std_deviation = np.std(revenues)
+
+    # NumPy values ko normal Python float mein convert karke return karo
+    return {
+        "average_revenue": round(float(average_revenue), 2),
+        "median_revenue": round(float(median_revenue), 2),
+        "maximum_revenue": round(float(maximum_revenue), 2),
+        "minimum_revenue": round(float(minimum_revenue), 2),
+        "revenue_std_deviation": round(
+            float(revenue_std_deviation), 2
+        )
+    }
