@@ -9,10 +9,10 @@ from sqlalchemy.orm import Session
 from database import SessionLocal, engine, Base
 
 # Product ka database model
-from models import Product
+from models import Product,Sale
 
 # Request aur response ke Pydantic schemas
-from schemas import ProductCreate, ProductResponse,ProductUpdate
+from schemas import ProductCreate, ProductResponse,ProductUpdate,SaleCreate
 
 
 # FastAPI application create karna
@@ -139,3 +139,44 @@ def delete_stock(product_id: int,
     db.commit()
 
     return {"message": "Product deleted successfully"}
+
+@app.post("/sales")
+def sale_create(sale:SaleCreate,
+    db : Session = Depends(get_db)
+                
+):
+    products = db.query(Product).filter(Product.product_id==sale.product_id).first()
+    if products is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Product not found"
+    
+)
+    
+    if products.stock < sale.quantity:
+        raise HTTPException(
+        status_code=400,
+        detail="Insufficient stock"
+    )
+    try:
+        products.stock = products.stock - sale.quantity
+        
+        new_sale = Sale(
+        product_id = sale.product_id,
+        quantity = sale.quantity,
+        selling_price = sale.selling_price
+        )
+        db.add(new_sale)
+        db.commit()
+
+        db.refresh(new_sale)
+
+        return new_sale
+    except Exception:
+        db.rollback()
+
+        raise
+    
+
+
+    
