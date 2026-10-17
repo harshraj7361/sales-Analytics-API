@@ -4,12 +4,17 @@ from sqlalchemy import create_engine, text
 
 # Database sessions aur model base banane ke tools import kar rahe hain
 from sqlalchemy.orm import sessionmaker, declarative_base
+import os
+from pathlib import Path
+from dotenv import  load_dotenv
+
+load_dotenv()
 
 
 # PostgreSQL database ka connection URL
 # Format: driver://username:password@host:port/database_name
 # Password mein special characters hon toh unhe URL-encode karna pad sakta hai
-DATABASE_URL = "postgresql+psycopg://postgres:harsh%402005@localhost:5432/sales_analytics"
+DATABASE_URL = os.getenv("DB_URL")
 
 
 # Engine database connections ko manage karta hai
