@@ -1,6 +1,7 @@
 
 # FastAPI application aur dependency injection ke tools
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 # SQLAlchemy database session ka type
 from sqlalchemy.orm import Session
@@ -20,6 +21,16 @@ import numpy as np
 
 # FastAPI application create karna
 app = FastAPI(title="Sales Analytics API")
+
+
+# Enable CORS for frontend applications (e.g. Vite on localhost:5173)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Model ke basis par missing tables create karega
