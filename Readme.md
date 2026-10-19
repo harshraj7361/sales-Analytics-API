@@ -107,4 +107,4 @@ Harsh Raj
 
 ---
 
-Built as a learning project to practice full-stack development, REST APIs, database management, and data analytics.
+Built as a learning project to practice backend development, FAST APIs, database management, and data analytics.
