@@ -54,6 +54,14 @@ def get_db():
 def home():
     return {"message": "Sales Analytics API is running"}
 
+@app.get("/api/health")
+async def health_check():
+    return {
+        "status": "online",
+        "message": "Sales Analytics  is running smoothly.",
+        "version": "2.0.0"
+    }
+
 
 # Naya product database mein add karne ka endpoint
 @app.post("/products", response_model=ProductResponse)
